@@ -1,8 +1,6 @@
 """
-This is used for Steam. Move the game screen to the top left corner of the screen.
-Steam should have it's own browser and settings in play.
-OFDP:
-x_pad=7
+Window must be in top left corner
+x_pad=7 adjust for window sides and top
 y_pad=29
 mouse press coords:
 steam play button (330,200)
@@ -17,8 +15,8 @@ play area(7,29,792,471)
 player picks round, start script, script presses mouse at (0,0)
 
 pixel locations:
-Ltrig(241,205)=grayscale()
-Rtrig(543,205)=grayscale()
+Ltrig(241,205)
+Rtrig(543,205)
 """
 import PIL
 import pyscreenshot as ImageGrab#pyscreenshot: wrapper replaces ImageGrab
@@ -37,14 +35,14 @@ f_win32 = False
 f_linux = False
 f_darwn = False
 
-
+#decides what OS and which libraries to import
 if(_platform=="win32"):#WINDOWS imports
     f_win32 = True
     #print "WINDOWS OS"
-    import win32api#win32api
+    import win32api
     import win32gui
     import win32con
-    #import pywinauto
+    #import pywinauto#wrapper that allows PIL/PILLOW images to run on non-window OS's 
     import ImageOps
     import numpy
     from numpy import *
@@ -72,14 +70,15 @@ y_pad = 29
 def LC():
     #Left Down
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
-    #Delay down signals
+    #Delay down signals, so it won't get ahead of itself
     time.sleep(.1)
     #Left Up
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     #print "LC"
 
+#
 '''
-#click-drag function
+#click-drag function, doesn't exactly work
 def LP():
     pywinauto.controls.HwndWrapper.DragMouse(button="left",pressed='',press_coords=(500,90),release_coords=(0,0))
     print "LP"
@@ -89,7 +88,7 @@ def LP():
 def RC():
     #Right Down
     win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,0,0)
-    #Delay down signals
+    #Delay down signals so it won't get ahead of itself
     time.sleep(.1)
     #Right Up
     win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,0,0)
@@ -101,7 +100,7 @@ def wheel():
     win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL,x_pad,y_pad,-1000,0)
 
 
-#coordinates of things
+#coordinates of things, doesn't really work but it's a cool concept
 class coord():
     press_play = (330, 200)
     drag_window = (500, 90)
@@ -111,18 +110,18 @@ class coord():
     menu_level = (250, 250)
     menu_diffi = (400, 230)
 
-#mouse coordinates to the things
+#set mouse to the coordinates
 def MPOS(cord):
     win32api.SetCursorPos((x_pad + cord[0], y_pad + cord[1]))
     
-#function to get coordinates of mouse
+#function to get specific coordinates of where ever the mouse is upon execution
 def get_cord():
     x,y=win32api.GetCursorPos()
     x=x-x_pad
     y=y-y_pad
     print x,y
 
-#slow ScreenGrab
+#Grabs a specific area of the screen, returns the image to a directory with a unique name
 def screenGrab():
     box = (x_pad,y_pad,x_pad+792,y_pad+471)
     im = ImageGrab.grab(box)
@@ -130,7 +129,8 @@ def screenGrab():
     #return im
 
 '''
-#doesn't work due to "color management" issues in getpixel()
+#should test the pixel colors much faster than screenGrab()
+#doesn't work due to "color management" issues in GetPixel()
 def FG(xcord, ycord):
     w = win32gui.FindWindow( None, "One Finger Death Punch" )#returns a handle
     dc = win32gui.GetWindowDC(w)#returns device context
@@ -217,21 +217,20 @@ def punchy():
 #Starts the game
 def StartGame():
     '''
-    #Steam: press play
+    #press play
     MPOS((330,200))
     LC()
-    time.sleep(5)
+    time.sleep(5)#time to wait varied by computer
     MPOS((500,90))
-    LP()
-
-    #move window to top left
     
+    #move window to top left
+    LP()
     '''
     
     #top Menu
     MPOS(coord.menu_top)
     LC()
-    time.sleep(20)
+    time.sleep(20)#allows game to fully load
     
     #click doors
     MPOS((400,330))
@@ -256,12 +255,12 @@ def StartGame():
     #zoom out on map
     wheel()
     time.sleep(1)
-    #'''
+    
 ################################################################################
 #LINUX CODE
 ################################################################################
 '''
-
+This should just grab the screen using autopy, haven't worked past that to make it "see".
 
 '''
 
@@ -294,7 +293,7 @@ def main():
         #StartGame()
         #user picks level
         #run to play level
-        punchy()
+        punchy()#function that punches/clicks
         #get_Stop()
         #get_Lbox()
         #get_Rbox()
