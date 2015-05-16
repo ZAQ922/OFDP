@@ -120,19 +120,23 @@ def get_cord():
     x=x-x_pad
     y=y-y_pad
     print x,y
-
+    
+#################################################SEEING SECTION#############################################################
+#These next 2 def are the core of grabbing pixels and "seeing" them
 #Grabs a specific area of the screen, returns the image to a directory with a unique name
 def screenGrab():
     box = (x_pad,y_pad,x_pad+792,y_pad+471)
-    im = ImageGrab.grab(box)
+    im=ImageOps.grayscale(ImageGrab.grab(box))#explained past FG() in better detail
     #im.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) +'.png', 'PNG')
+    a=array(im.getcolors())
+    q=int(a.sum())
     #return im
 
 '''
 #should test the pixel colors much faster than screenGrab()
 #doesn't work due to "color management" issues in GetPixel()
 def FG(xcord, ycord):
-    w = win32gui.FindWindow( None, "One Finger Death Punch" )#returns a handle
+    w = win32gui.FindWindow( None, "Bob Ross/window name" )#returns a handle
     dc = win32gui.GetWindowDC(w)#returns device context
     a=win32gui.GetPixel(w,xcord,ycord)#returns RGB from handle
     #dc.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
@@ -140,10 +144,17 @@ def FG(xcord, ycord):
     return a
 '''
 
+#the next get_X() use grayscale() and getcolors() to turn the pixels to grayscale, get the ASCII values and put them in an array
+#that array is then summed for a precise number to decide actions
+#large pixel area = accurate sum, slower processing
+#small pixel area = inaccurate sum, faster processing
+#REMINDER: box=(x_init,y_init,x_end,y_end)
+#              (   Top Left  ,Bottom right)
+#.grab(box) expands left and down
 
-#Get pixel sum for Stop button(beat level)
+#way to end punchy() while loop
 def get_Stop():
-    box=(x_pad+661,y_pad+279,x_pad+661+3,y_pad+279+3)
+    box=(x_pad+661,y_pad+279,x_pad+661+3,y_pad+279+3)#adjust ranges for x/y_pad i.e.:668-7=661,306-27=279; +3 is matrix added
     im=ImageOps.grayscale(ImageGrab.grab(box))
     #im.save(os.getcwd() + '/STHAP__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
@@ -151,9 +162,9 @@ def get_Stop():
     #print "Stop\t"+ str(q)
     return q
 
-#Get pixel sum for Left Box(leftmost under stick guy)
+#way to end the punchy() while loop
 def get_Pause():
-    box=(x_pad+(50-x_pad),y_pad+(32-y_pad),x_pad+(61-x_pad),y_pad+(45-y_pad))
+    box=(x_pad+43,y_pad+5,x_pad+54,y_pad+18)
     im=ImageOps.grayscale(ImageGrab.grab(box))
     #ImageGrab.grab(box).save(os.getcwd() + '/Pause__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
@@ -161,7 +172,7 @@ def get_Pause():
     #print "Pause\t" + str(q)
     return q
 
-#Get pixel sum for Left Box(leftmost under stick guy)
+#Get pixel sum for Left Box(leftmost under guy)
 def get_Lbox():
     box=(x_pad+241,y_pad+205,x_pad+241+3,y_pad+205+3)#must offset from window
     im=ImageOps.grayscale(ImageGrab.grab(box))
@@ -171,18 +182,22 @@ def get_Lbox():
     #print "Lbox\t" + str(q)
     return q
 
-#Get pixel sum for Right Box(rightmost under stick guy)
+#Get pixel sum for Right Box(rightmost under guy)
+#.grab() will expand to the left, because this is the get_Rightbox, the left side shouldn't move
+#keep that in mind by moving the (x/y_init-z) AND (x/y_end+z), Z being the amount you want to adjust the area by
 def get_Rbox():
-    box=(x_pad+542,y_pad+205,x_pad+542+3,y_pad+205+3)#must offset from window
+    box=(x_pad+542,y_pad+205,x_pad+542+3,y_pad+205+3)
     im=ImageOps.grayscale(ImageGrab.grab(box))
     #ImageGrab.grab(box).save(os.getcwd() + '/RBox__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
     q=int(a.sum())
     #print "Rbox\t" + str(q)
     return q
+    
+############################################################################################################################
 
 
-#Left/Right sides are blank with these sum values
+#Class for particular values that will need logical comparisons
 class Blank:
     LInit = 1129#initial left
     RInit = 1427#initial right
@@ -190,7 +205,7 @@ class Blank:
     RHit = 1756#hit right
     BMiss = 9#if it misses on either side
     Stop = 868#stop check
-    Pause = 3469#144
+    Pause = 3469#144/3469
 
 
 #checks box values and punches accordingly
@@ -215,6 +230,7 @@ def punchy():
                 RC()
 
 #Starts the game
+#mainly for my computer, making it go through all the menus and such
 def StartGame():
     '''
     #press play
@@ -272,6 +288,7 @@ def autoTrial():
     #that=autopy.screen.get_color(1,1)#.screen is shorter version of bitmap.capture_screen()
     #print that
     t1=time.time()
+    #DISCLAIMER: Ugly code below
     oneone=int(sum(array(autopy.color.hex_to_rgb(autopy.screen.get_color(1,1)))))#stores rgb of a pixel into an array then sums as int
     #print oneone
     onetwo=int(sum(array(autopy.color.hex_to_rgb(autopy.screen.get_color(1,2)))))
@@ -284,7 +301,7 @@ def autoTrial():
     #print three
     t2=time.time()
     tf=t2-t1
-    IPS=int(1/tf)
+    IPS=int(1/tf)#trying to figure out the iterations per second
     print IPS
 
 def main():
@@ -294,6 +311,8 @@ def main():
         #user picks level
         #run to play level
         punchy()#function that punches/clicks
+        
+        #print statement checking stuff
         #get_Stop()
         #get_Lbox()
         #get_Rbox()
@@ -304,6 +323,6 @@ def main():
     elif(f_darwn):
         print "f_darwn = True"  
     else:
-        print "UNKNOWN OS"  
+        print "UNKNOWN OS!!!!"
 
 main()
