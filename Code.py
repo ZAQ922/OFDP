@@ -76,7 +76,7 @@ def LC():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     #print "LC"
 
-#
+
 '''
 #click-drag function, doesn't exactly work
 def LP():
@@ -120,6 +120,19 @@ def get_cord():
     x=x-x_pad
     y=y-y_pad
     print x,y
+
+#Class for particular values that will need logical comparisons
+#4x4 matrix for me
+class Blank:
+    #LInit = 782#initial left
+    #RInit = 667#initial right
+    LHit = 543
+    RHit = 662
+    #BMiss = 16#if it misses on either side
+    Stop = 868#stop check
+    Pause = 171#UNPAUSE
+    Replay = 162
+
     
 #################################################SEEING SECTION#############################################################
 #These next 2 def are the core of grabbing pixels and "seeing" them
@@ -146,6 +159,8 @@ def FG(xcord, ycord):
 
 #the next get_X() use grayscale() and getcolors() to turn the pixels to grayscale, get the ASCII values and put them in an array
 #that array is then summed for a precise number to decide actions
+#.grab() will expand to the left, because this is the get_Rightbox, the left side shouldn't move
+#keep that in mind by moving the (x/y_init-z) AND (x/y_end+z), Z being the amount you want to adjust the area by
 #large pixel area = accurate sum, slower processing
 #small pixel area = inaccurate sum, faster processing
 #REMINDER: box=(x_init,y_init,x_end,y_end)
@@ -153,40 +168,38 @@ def FG(xcord, ycord):
 #.grab(box) expands left and down
 
 #way to end punchy() while loop
-def get_Stop():
-    box=(x_pad+661,y_pad+279,x_pad+661+3,y_pad+279+3)#adjust ranges for x/y_pad i.e.:668-7=661,306-27=279; +3 is matrix added
-    im=ImageOps.grayscale(ImageGrab.grab(box))
-    #im.save(os.getcwd() + '/STHAP__' + str(int(time.time())) +'.png', 'PNG')
-    a=array(im.getcolors())
-    q=int(a.sum())
-    #print "Stop\t"+ str(q)
-    return q
+def get_Kick():
+    flag1=False
+    box1=(x_pad+661,y_pad+279,x_pad+661+3,y_pad+279+3)#STOP
+    im1=ImageOps.grayscale(ImageGrab.grab(box1))
+    a1=array(im1.getcolors())
+    q1=int(a1.sum())
+    box2=(x_pad+355,y_pad+338,x_pad+355+1,y_pad+338+1)#REPLAY
+    im2=ImageOps.grayscale(ImageGrab.grab(box2))
+    a2=array(im2.getcolors())
+    q2=int(a2.sum())
+    box3=(x_pad+41,y_pad+3,x_pad+41+1,y_pad+3+1)#PAUSE
+    im3=ImageOps.grayscale(ImageGrab.grab(box3))
+    a3=array(im3.getcolors())
+    q3=int(a3.sum())
+    if((q1==Blank.Stop)or(q2==Blank.Replay)or(q3==Blank.Pause)):
+        flag1=True
+    return flag1
 
-#way to end the punchy() while loop
-def get_Pause():
-    box=(x_pad+43,y_pad+5,x_pad+54,y_pad+18)
-    im=ImageOps.grayscale(ImageGrab.grab(box))
-    #ImageGrab.grab(box).save(os.getcwd() + '/Pause__' + str(int(time.time())) +'.png', 'PNG')
-    a=array(im.getcolors())
-    q=int(a.sum())
-    #print "Pause\t" + str(q)
-    return q
 
 #Get pixel sum for Left Box(leftmost under guy)
 def get_Lbox():
-    box=(x_pad+241,y_pad+205,x_pad+241+3,y_pad+205+3)#must offset from window
+    box=(x_pad+359,y_pad+232,x_pad+359+3,y_pad+232+3)#must offset from window
     im=ImageOps.grayscale(ImageGrab.grab(box))
-    #ImageGrab.grab(box).save(os.getcwd() + '/LBox__' + str(int(time.time())) +'.png', 'PNG')
+    ImageGrab.grab().save(os.getcwd() + '/LBox__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
     q=int(a.sum())
-    #print "Lbox\t" + str(q)
+    print "Lbox\t" + str(q)
     return q
 
 #Get pixel sum for Right Box(rightmost under guy)
-#.grab() will expand to the left, because this is the get_Rightbox, the left side shouldn't move
-#keep that in mind by moving the (x/y_init-z) AND (x/y_end+z), Z being the amount you want to adjust the area by
 def get_Rbox():
-    box=(x_pad+542,y_pad+205,x_pad+542+3,y_pad+205+3)
+    box=(x_pad+424,y_pad+232,x_pad+424+3,y_pad+232+3)
     im=ImageOps.grayscale(ImageGrab.grab(box))
     #ImageGrab.grab(box).save(os.getcwd() + '/RBox__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
@@ -197,40 +210,30 @@ def get_Rbox():
 ############################################################################################################################
 
 
-#Class for particular values that will need logical comparisons
-class Blank:
-    LInit = 1129#initial left
-    RInit = 1427#initial right
-    LHit = 1513#hit left
-    RHit = 1756#hit right
-    BMiss = 9#if it misses on either side
-    Stop = 868#stop check
-    Pause = 3469#144/3469
-
 
 #checks box values and punches accordingly
 def punchy():
+    print "PUNCHY"
     time.sleep(5)#delay for game to start
     while(True):
-        stop = get_Stop()#gets real time pause box sum
-        pause = get_Pause()
+        flag = get_Kick()
         #if pause equals pause pixel sum, end loop
-        if(stop==Blank.Stop)or(pause==Blank.Pause):
+        if(flag==True):
+            print "KICK"
             break
         else:
             bob = get_Lbox()#gets real time left box sum
             ross = get_Rbox()#gets real time right box sum                
-            if((bob != Blank.LInit) and (bob != Blank.BMiss)):
+            if(bob == Blank.LHit):
                 #Left mouse click
                 print "LC"
                 LC()
-            if((ross != Blank.RInit) and (ross != Blank.BMiss)):
+            if(ross == Blank.RHit):
                 #Right mouse click
                 print "RC"
                 RC()
 
 #Starts the game
-#mainly for my computer, making it go through all the menus and such
 def StartGame():
     '''
     #press play
@@ -288,7 +291,6 @@ def autoTrial():
     #that=autopy.screen.get_color(1,1)#.screen is shorter version of bitmap.capture_screen()
     #print that
     t1=time.time()
-    #DISCLAIMER: Ugly code below
     oneone=int(sum(array(autopy.color.hex_to_rgb(autopy.screen.get_color(1,1)))))#stores rgb of a pixel into an array then sums as int
     #print oneone
     onetwo=int(sum(array(autopy.color.hex_to_rgb(autopy.screen.get_color(1,2)))))
@@ -301,7 +303,7 @@ def autoTrial():
     #print three
     t2=time.time()
     tf=t2-t1
-    IPS=int(1/tf)#trying to figure out the iterations per second
+    IPS=int(1/tf)
     print IPS
 
 def main():
@@ -310,19 +312,15 @@ def main():
         #StartGame()
         #user picks level
         #run to play level
-        punchy()#function that punches/clicks
+        #punchy()#function that punches/clicks
+        get_Lbox()
         
-        #print statement checking stuff
-        #get_Stop()
-        #get_Lbox()
-        #get_Rbox()
-        #get_Pause()
     elif(f_linux):
         #print "f_linux = True"
         autoTrial()
     elif(f_darwn):
         print "f_darwn = True"  
     else:
-        print "UNKNOWN OS!!!!"
+        print "UNKNOWN OS"  
 
 main()
