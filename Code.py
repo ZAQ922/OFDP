@@ -126,8 +126,8 @@ def get_cord():
 class Blank:
     #LInit = 782#initial left
     #RInit = 667#initial right
-    LHit = 543
-    RHit = 662
+    LHit = 543#543=3pix
+    RHit = 662#662=3pix
     #BMiss = 16#if it misses on either side
     Stop = 868#stop check
     Pause = 171#UNPAUSE
@@ -147,14 +147,23 @@ def screenGrab():
 
 '''
 #should test the pixel colors much faster than screenGrab()
-#doesn't work due to "color management" issues in GetPixel()
-def FG(xcord, ycord):
-    w = win32gui.FindWindow( None, "Bob Ross/window name" )#returns a handle
-    dc = win32gui.GetWindowDC(w)#returns device context
-    a=win32gui.GetPixel(w,xcord,ycord)#returns RGB from handle
-    #dc.save(os.getcwd() + '\\full_snap__' + str(int(time.time())) + '.png', 'PNG')
-    win32gui.DeleteDC()
-    return a
+#Uses win32 api for speed
+def FG(x,y):
+    windowName="Bob Ross"
+    hwnd= win32gui.FindWindow(None, windowName)
+    wDC = win32gui.GetWindowDC(hwnd)
+    dcObj=win32ui.CreateDCFromHandle(wDC)
+    cDC=dcObj.CreateCompatibleDC()
+    dataBitMap = win32ui.CreateBitmap()
+    dataBitMap.CreateCompatibleBitmap(dcObj, x, y)
+    cDC.SelectObject(dataBitMap)
+    cDC.BitBlt((0,0),(x, y) , dcObj, (0,0), win32con.SRCCOPY)
+    dataBitMap.SaveBitmapFile(cDC, bmpfilenamename)
+    dcObj.DeleteDC()
+    cDC.DeleteDC()
+    win32gui.ReleaseDC(hwnd, wDC)
+    win32gui.DeleteObject(dataBitMap.GetHandle())
+    win32ui.CreateDCFromHandle(wDC).CreateCompatibleDC().BitBlt((0,0),(x, y), dcObj, (0,0), win32con.SRCCOPY)
 '''
 
 #the next get_X() use grayscale() and getcolors() to turn the pixels to grayscale, get the ASCII values and put them in an array
@@ -189,9 +198,9 @@ def get_Kick():
 
 #Get pixel sum for Left Box(leftmost under guy)
 def get_Lbox():
-    box=(x_pad+359,y_pad+232,x_pad+359+3,y_pad+232+3)#must offset from window
+    box=(x_pad+359,y_pad+232,x_pad+359+1,y_pad+232+1)#must offset from window
     im=ImageOps.grayscale(ImageGrab.grab(box))
-    ImageGrab.grab().save(os.getcwd() + '/LBox__' + str(int(time.time())) +'.png', 'PNG')
+    ImageGrab.grab(box).save(os.getcwd() + '/LBox__' + str(int(time.time())) +'.png', 'PNG')
     a=array(im.getcolors())
     q=int(a.sum())
     print "Lbox\t" + str(q)
